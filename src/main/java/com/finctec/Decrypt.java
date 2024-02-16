@@ -2,7 +2,11 @@ package com.finctec;
 
 import java.io.File;
 import java.io.FileReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Base64;
 import javax.crypto.Cipher;
@@ -24,13 +28,13 @@ public class Decrypt {
             PrivateKey pKey = loadPrivateKey("webhook_encryption_private_key_RSPEC_ONLY.pem");
 
             // Load Webhook from File.
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(new File("encrypted_webhook.json"));
+            String webhookPayload = Files.readString(Paths.get("encrypted_webhook.json"), Charset.defaultCharset());
 
             // Extract webhook values
-            String encrypted_aes_key_base64 = jsonNode.get("encrypted_aes_key_base64").asText();
-            String encrypted_payload_base64 = jsonNode.get("encrypted_payload_base64").asText();
-            String iv_base64 = jsonNode.get("iv_base64").asText();
+            String[] splitWebhookPayload = webhookPayload.split("\\$");
+            String encrypted_aes_key_base64 = splitWebhookPayload[0];
+            String iv_base64 = splitWebhookPayload[1];
+            String encrypted_payload_base64 = splitWebhookPayload[2];
 
             String decryptedAesKey = decrypt(pKey, encrypted_aes_key_base64);
             byte[] aesKeyBytes = Base64.getDecoder().decode(decryptedAesKey);
